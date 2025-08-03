@@ -1,22 +1,12 @@
-// src/pages/Products.js
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Container, Spinner } from 'react-bootstrap';
+import { Card, Row, Col, Container, Spinner, Button } from 'react-bootstrap'; // Added Button import
 import api from '../services/api';
-import { useCart } from '../contexts/CartContext';
-
-// Inside your product component:
-const { addToCart } = useCart();
-
-<Button 
-  variant="primary" 
-  onClick={() => addToCart(product)}
->
-  Add to Cart
-</Button>
+import { useCart } from '../contexts/CartContext'; // Moved inside component
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart(); // Moved inside the component
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -55,11 +45,40 @@ const Products = () => {
               />
               <Card.Body>
                 <Card.Title>{product.name}</Card.Title>
-                <Card.Text>
-                  <strong>Price:</strong> ${product.price}<br />
-                  <strong>Category:</strong> {product.get_category_display()}
+                <Card.Text className="mb-3">
+                    <strong>Price:</strong> ${product.price}<br />
+                    <strong>In Stock:</strong> {product.quantity}
                 </Card.Text>
-              </Card.Body>
+                
+                <Form.Group controlId={`quantity-${product.id}`} className="mb-3">
+                    <Form.Label>Quantity</Form.Label>
+                    <Form.Control
+                    type="number"
+                    min="1"
+                    max={product.quantity}
+                    defaultValue="1"
+                    onChange={(e) => {
+                        const value = Math.min(
+                        Math.max(parseInt(e.target.value || 1, 10),
+                        product.quantity
+                        );
+                        e.target.value = value;
+                    }}
+                    />
+                </Form.Group>
+
+                <Button 
+                    variant="primary" 
+                    onClick={() => {
+                    const quantity = parseInt(
+                        document.getElementById(`quantity-${product.id}`).value
+                    );
+                    addToCart({ ...product, quantity });
+                    }}
+                >
+                    Add to Cart
+                </Button>
+                </Card.Body>
             </Card>
           </Col>
         ))}

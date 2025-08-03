@@ -35,7 +35,6 @@ def export_orders(request):
     writer = csv.writer(response)
     writer.writerow(['Order ID', 'Date', 'Total'])
 
-# marketplace/views.py
 from rest_framework.permissions import IsAuthenticated
 
 class FarmerProducts(generics.ListAPIView):
