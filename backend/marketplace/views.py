@@ -34,3 +34,22 @@ def export_orders(request):
     response = HttpResponse(content_type='text/csv')
     writer = csv.writer(response)
     writer.writerow(['Order ID', 'Date', 'Total'])
+
+# marketplace/views.py
+from rest_framework.permissions import IsAuthenticated
+
+class FarmerProducts(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Product.objects.filter(farmer__user=self.request.user)
+    
+    serializer_class = ProductSerializer
+
+class FarmerOrders(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Order.objects.filter(items__product__farmer__user=self.request.user).distinct()
+    
+    serializer_class = OrderSerializer
