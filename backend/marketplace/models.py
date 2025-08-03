@@ -8,19 +8,22 @@ class FarmerProfile(models.Model):
     contact_number = models.CharField(max_length=20)
     bio = models.TextField(blank=True)
 
+# models.py
 class Product(models.Model):
-    CATEGORIES = [
-        ('FR', 'Fruits'),
+    CATEGORY_CHOICES = [
         ('VG', 'Vegetables'),
+        ('FR', 'Fruits'),
         ('GR', 'Grains'),
         ('DA', 'Dairy'),
     ]
     
     farmer = models.ForeignKey(FarmerProfile, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    category = models.CharField(max_length=2, choices=CATEGORIES)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.PositiveIntegerField()
     description = models.TextField()
-    image = models.ImageField(upload_to='products/', blank=True, null=True)
-    date_added = models.DateTimeField(auto_now_add=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    category = models.CharField(max_length=2, choices=CATEGORY_CHOICES)
+    quantity = models.PositiveIntegerField()
+    image = models.ImageField(upload_to='products/')
+    harvest_date = models.DateField()
+    expiry_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
