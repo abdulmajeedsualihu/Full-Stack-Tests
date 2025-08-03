@@ -12,7 +12,7 @@ import {
 import api from '../services/api';
 import { useCart } from '../contexts/CartContext';
 import { toast } from 'react-toastify';
-import { formatPrice } from '../utils/format';  // Make sure this utility exists
+import { formatPrice } from '../utils/Format';  // Make sure this utility exists
 
 const Products = () => {
   const [products, setProducts] = useState([]);
