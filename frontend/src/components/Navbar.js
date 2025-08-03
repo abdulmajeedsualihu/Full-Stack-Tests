@@ -23,4 +23,4 @@ const CustomNavbar = () => {
   );
 };
 
-export default CustomNavbar;
+export default Navbar;
