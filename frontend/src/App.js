@@ -3,6 +3,10 @@ import Home from './pages/Home';
 import Products from './pages/Products';
 import Login from './pages/Login';
 import Navbar from './components/Navbar'; 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+<ToastContainer position="bottom-right" autoClose={3000} />
 
 function App() {
   return (

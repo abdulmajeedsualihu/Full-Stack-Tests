@@ -1,4 +1,7 @@
-// Update your CartContext.js
+import React, { createContext, useState, useContext } from 'react';
+
+const CartContext = createContext();
+
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
@@ -32,8 +35,17 @@ export const CartProvider = ({ children }) => {
     );
   };
 
+  const clearCart = () => {
+    setCart([]);
+  };
+
   const cartTotal = cart.reduce(
     (total, item) => total + item.price * item.quantity,
+    0
+  );
+
+  const cartItemCount = cart.reduce(
+    (count, item) => count + item.quantity,
     0
   );
 
@@ -44,10 +56,14 @@ export const CartProvider = ({ children }) => {
         addToCart, 
         removeFromCart, 
         updateQuantity,
-        cartTotal
+        clearCart,
+        cartTotal,
+        cartItemCount
       }}
     >
       {children}
     </CartContext.Provider>
   );
 };
+
+export const useCart = () => useContext(CartContext);
