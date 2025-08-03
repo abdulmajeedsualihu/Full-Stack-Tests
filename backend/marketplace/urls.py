@@ -5,6 +5,7 @@ urlpatterns = [
     path('farmers/', FarmerList.as_view()),
     path('farmers/<int:pk>/', FarmerDetail.as_view()),
     path('products/', ProductList.as_view()),
+    path('register/', RegisterView.as_view(), name='register'),
     path('products/<int:pk>/', ProductDetail.as_view()),
     path('farmer/products/', FarmerProducts.as_view()),
     path('farmer/orders/', FarmerOrders.as_view()),

@@ -85,7 +85,11 @@ const Farmers = () => {
             <div className="mt-3">
               <h3>{farmer.farm_name}'s Products</h3>
               <p className="text-muted">{farmer.location}</p>
-              
+              <Card.Img 
+                variant="top" 
+                src={farmer.profile_image || 'https://via.placeholder.com/300'}
+                style={{ height: '200px', objectFit: 'cover' }}
+                />
               <Row>
                 {getFarmerProducts(farmer.id).map(product => (
                   <Col key={product.id} md={4} className="mb-4">

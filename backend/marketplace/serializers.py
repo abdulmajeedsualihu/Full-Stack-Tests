@@ -5,7 +5,8 @@ from django.contrib.auth.models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email']
+        fields = ['username', 'email', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
 
 class FarmerProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -14,10 +15,15 @@ class FarmerProfileSerializer(serializers.ModelSerializer):
         model = FarmerProfile
         fields = '__all__'
 
-class ProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Product
-        fields = '__all__'
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user = User.objects.create_user(
+            username=user_data['username'],
+            email=user_data['email'],
+            password=user_data['password']
+        )
+        farmer_profile = FarmerProfile.objects.create(user=user, **validated_data)
+        return farmer_profile
 
 # serializers.py
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
