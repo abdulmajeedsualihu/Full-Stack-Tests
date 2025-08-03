@@ -26,9 +26,9 @@ const Dashboard = () => {
     products: [],
     notifications: [],
     events: [],
-    analytics: {   // ← Fixed: Now an object with expected properties
-    monthly_revenue: [],
-    order_status: []
+    analytics: {
+      monthly_revenue: [],
+      order_status: []
     }
   });
   const [loading, setLoading] = useState(true);
@@ -44,59 +44,60 @@ const Dashboard = () => {
   // Fetch all dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
-  try {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
 
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    // Define all endpoints to fetch
-    const endpoints = [
-      'user/profile/',
-      'user/stats/',
-      'orders/recent/',
-      'products/',
-      'notifications/',
-      'calendar/events/',
-      'analytics/'
-    ];
+        // Define all endpoints to fetch
+        const endpoints = [
+          'user/profile/',
+          'user/stats/',
+          'orders/recent/',
+          'products/',
+          'notifications/',
+          'calendar/events/',
+          'analytics/'
+        ];
 
-    // Use Promise.allSettled to handle successes/failures
-    const responses = await Promise.allSettled(
-      endpoints.map(endpoint => api.get(endpoint))
-    );
+        // Use Promise.allSettled to handle successes/failures
+        const responses = await Promise.allSettled(
+          endpoints.map(endpoint => api.get(endpoint).catch(e => e))
+        );
 
-    // Process responses
-    const data = {
-      profile: responses[0].status === 'fulfilled' ? responses[0].value.data : null,
-      stats: responses[1].status === 'fulfilled' ? responses[1].value.data : null,
-      recentOrders: responses[2].status === 'fulfilled' ? responses[2].value.data : [],
-      products: responses[3].status === 'fulfilled' ? responses[3].value.data : [],
-      notifications: responses[4].status === 'fulfilled' ? responses[4].value.data : [],
-      events: responses[5].status === 'fulfilled' 
-        ? responses[5].value.data.map(event => ({
-            ...event,
-            start: new Date(event.start),
-            end: new Date(event.end)
-          })) 
-        : [],
-      analytics: responses[6].status === 'fulfilled' 
-        ? responses[6].value.data 
-        : { monthly_revenue: [], order_status: [] }
+        // Process responses
+        const data = {
+          profile: responses[0].status === 'fulfilled' ? responses[0].value.data : null,
+          stats: responses[1].status === 'fulfilled' ? responses[1].value.data : null,
+          recentOrders: responses[2].status === 'fulfilled' ? responses[2].value.data : [],
+          products: responses[3].status === 'fulfilled' ? responses[3].value.data : [],
+          notifications: responses[4].status === 'fulfilled' ? responses[4].value.data : [],
+          events: responses[5].status === 'fulfilled' 
+            ? responses[5].value.data.map(event => ({
+                ...event,
+                start: new Date(event.start),
+                end: new Date(event.end)
+              })) 
+            : [],
+          analytics: responses[6].status === 'fulfilled' 
+            ? responses[6].value.data 
+            : { monthly_revenue: [], order_status: [] }
+        };
+
+        setDashboardData(data);
+        setUnreadCount(data.notifications.filter(n => !n.read).length);
+        setLoading(false);
+
+      } catch (error) {
+        handleApiError(error);
+        setLoading(false);
+      }
     };
 
-    setDashboardData(data);
-    setUnreadCount(data.notifications.filter(n => !n.read).length);
-    setLoading(false);
-
-  } catch (error) {
-    handleApiError(error);
-    setLoading(false);
-  }
-};
     fetchDashboardData();
   }, [navigate]);
 
@@ -133,7 +134,11 @@ const Dashboard = () => {
       const response = await api.post('calendar/events/', newEvent);
       setDashboardData(prev => ({
         ...prev,
-        events: [...prev.events, response.data]
+        events: [...prev.events, {
+          ...response.data,
+          start: new Date(response.data.start),
+          end: new Date(response.data.end)
+        }]
       }));
       setShowEventModal(false);
       toast.success('Event created successfully');
@@ -179,16 +184,20 @@ const Dashboard = () => {
         <Card>
           <Card.Body>
             <Card.Title>Monthly Revenue</Card.Title>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={dashboardData.analytics.monthly_revenue}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="revenue" stroke="#8884d8" />
-              </LineChart>
-            </ResponsiveContainer>
+            {dashboardData.analytics?.monthly_revenue?.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={dashboardData.analytics.monthly_revenue}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="revenue" stroke="#8884d8" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <Alert variant="info">No revenue data available</Alert>
+            )}
           </Card.Body>
         </Card>
       </Col>
@@ -196,25 +205,32 @@ const Dashboard = () => {
         <Card>
           <Card.Body>
             <Card.Title>Order Status</Card.Title>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={dashboardData.analytics.order_status}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {dashboardData.analytics.order_status.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={statusColors[entry.name.toLowerCase()]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {dashboardData.analytics?.order_status?.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={dashboardData.analytics.order_status}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {dashboardData.analytics.order_status.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={statusColors[entry.name?.toLowerCase()] || COLORS[index % COLORS.length]} 
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <Alert variant="info">No order status data available</Alert>
+            )}
           </Card.Body>
         </Card>
       </Col>
@@ -253,23 +269,27 @@ const Dashboard = () => {
             <Badge bg="danger" className="ms-2">{unreadCount}</Badge>
           )}
         </Card.Title>
-        <ListGroup variant="flush">
-          {dashboardData.notifications.map(notification => (
-            <ListGroup.Item 
-              key={notification.id} 
-              action 
-              onClick={() => markNotificationAsRead(notification.id)}
-              className={!notification.read ? 'fw-bold' : ''}
-            >
-              <div className="d-flex justify-content-between">
-                <div>{notification.message}</div>
-                <div className="text-muted small">
-                  {moment(notification.created_at).fromNow()}
+        {dashboardData.notifications.length > 0 ? (
+          <ListGroup variant="flush">
+            {dashboardData.notifications.map(notification => (
+              <ListGroup.Item 
+                key={notification.id} 
+                action 
+                onClick={() => markNotificationAsRead(notification.id)}
+                className={!notification.read ? 'fw-bold' : ''}
+              >
+                <div className="d-flex justify-content-between">
+                  <div>{notification.message}</div>
+                  <div className="text-muted small">
+                    {moment(notification.created_at).fromNow()}
+                  </div>
                 </div>
-              </div>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        ) : (
+          <Alert variant="info">No notifications available</Alert>
+        )}
       </Card.Body>
     </Card>
   );
@@ -339,7 +359,6 @@ const Dashboard = () => {
         <Tab eventKey="notifications" title={`Notifications ${unreadCount > 0 ? `(${unreadCount})` : ''}`}>
           {renderNotificationsTab()}
         </Tab>
-        {/* Add more tabs as needed */}
       </Tabs>
 
       {/* Event Modal */}
@@ -355,6 +374,7 @@ const Dashboard = () => {
                 type="text"
                 value={newEvent.title}
                 onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                required
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -363,6 +383,7 @@ const Dashboard = () => {
                 type="datetime-local"
                 value={moment(newEvent.start).format('YYYY-MM-DDTHH:mm')}
                 onChange={(e) => setNewEvent({...newEvent, start: new Date(e.target.value)})}
+                required
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -371,6 +392,7 @@ const Dashboard = () => {
                 type="datetime-local"
                 value={moment(newEvent.end).format('YYYY-MM-DDTHH:mm')}
                 onChange={(e) => setNewEvent({...newEvent, end: new Date(e.target.value)})}
+                required
               />
             </Form.Group>
             <Form.Check
@@ -405,6 +427,7 @@ const ProfileCard = ({ profile }) => (
               src={profile.avatar} 
               alt="Profile" 
               className="rounded-circle img-thumbnail"
+              style={{ width: '100px', height: '100px', objectFit: 'cover' }}
             />
           ) : (
             <div className="bg-light rounded-circle d-flex align-items-center justify-content-center" 
