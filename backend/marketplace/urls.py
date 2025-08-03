@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import FarmerList, FarmerDetail, ProductList, ProductDetail, FarmerProducts, FarmerOrders
+from .views import FarmerList, FarmerDetail, ProductList, ProductDetail, FarmerProducts, FarmerOrders, RegisterView
 
 urlpatterns = [
     path('farmers/', FarmerList.as_view()),

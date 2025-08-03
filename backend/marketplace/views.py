@@ -54,8 +54,10 @@ class FarmerOrders(generics.ListAPIView):
     
     serializer_class = OrderSerializer
 
+# views.py - Add these debug prints
 class RegisterView(APIView):
     def post(self, request):
+        print("Received registration data:", request.data)  # Debug print
         data = request.data
         is_farmer = data.get('is_farmer', False)
         
@@ -65,10 +67,14 @@ class RegisterView(APIView):
             'password': data['password']
         })
         
+        print("User serializer data:", user_serializer.initial_data)  # Debug print
+        
         if user_serializer.is_valid():
+            print("User data is valid")  # Debug print
             user = user_serializer.save()
             
             if is_farmer:
+                print("Creating farmer profile")  # Debug print
                 farmer_data = {
                     'user': user.id,
                     'farm_name': data['farm_name'],
@@ -78,7 +84,11 @@ class RegisterView(APIView):
                 farmer_serializer = FarmerProfileSerializer(data=farmer_data)
                 if farmer_serializer.is_valid():
                     farmer_serializer.save()
+                    print("Farmer profile created")  # Debug print
+                else:
+                    print("Farmer profile errors:", farmer_serializer.errors)  # Debug print
             
             return Response({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
         
+        print("User serializer errors:", user_serializer.errors)  # Debug print
         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

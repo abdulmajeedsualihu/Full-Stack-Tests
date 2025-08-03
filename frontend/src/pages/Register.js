@@ -26,7 +26,7 @@ const Register = () => {
     });
   };
 
-  const validateForm = () => {
+    const validateForm = () => {
     const newErrors = {};
     
     if (!formData.username.trim()) newErrors.username = 'Username is required';
@@ -42,39 +42,54 @@ const Register = () => {
     }
 
     setErrors(newErrors);
+    
+    // Add this debug line:
+    console.log('Validation errors:', newErrors);
+    
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+  e.preventDefault();
+  console.log('Form submitted'); // Check if form submission fires
+  
+  if (!validateForm()) {
+    console.log('Validation failed', errors); // Check validation errors
+    return;
+  }
 
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        is_farmer: formData.user_type === 'farmer'
-      };
+  console.log('Form data to submit:', formData); // Verify form data
+  
+  setIsSubmitting(true);
+  try {
+    const payload = {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+      is_farmer: formData.user_type === 'farmer'
+    };
 
-      if (formData.user_type === 'farmer') {
-        payload.farm_name = formData.farm_name;
-        payload.location = formData.location;
-        payload.contact_number = formData.contact_number;
-      }
-
-      await api.post('/register/', payload);
-      toast.success('Registration successful! Please login.');
-      navigate('/login');
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast.error(error.response?.data?.message || 'Registration failed');
-    } finally {
-      setIsSubmitting(false);
+    if (formData.user_type === 'farmer') {
+      payload.farm_name = formData.farm_name;
+      payload.location = formData.location;
+      payload.contact_number = formData.contact_number;
     }
-  };
 
+    console.log('Final payload:', payload); // Check the payload
+    
+    const response = await api.post('/register/', payload);
+    console.log('API response:', response); // Check API response
+    
+    toast.success('Registration successful! Please login.');
+    navigate('/login');
+  } catch (error) {
+    console.error('Registration error:', error);
+    console.log('Error response:', error.response); // Detailed error info
+    toast.error(error.response?.data?.message || 'Registration failed');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   return (
     <Container className="mt-5">
       <Row className="justify-content-center">
@@ -83,7 +98,7 @@ const Register = () => {
             <Card.Body>
               <h2 className="text-center mb-4">Create Your Account</h2>
               
-              <Form onSubmit={handleSubmit}>
+              <Form onSubmit={handleSubmit} noValidate>
                 <Form.Group className="mb-3">
                   <Form.Label>I am a:</Form.Label>
                   <div>
@@ -211,21 +226,20 @@ const Register = () => {
                   </>
                 )}
 
-                <Button 
+                 <Button 
                   variant="primary" 
                   type="submit" 
                   className="w-100 mt-3"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Registering...' : 'Register'}
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                      Registering...
+                    </>
+                  ) : 'Register'}
                 </Button>
               </Form>
-
-              <div className="text-center mt-3">
-                <p>
-                  Already have an account? <Link to="/login">Log In</Link>
-                </p>
-              </div>
             </Card.Body>
           </Card>
         </Col>

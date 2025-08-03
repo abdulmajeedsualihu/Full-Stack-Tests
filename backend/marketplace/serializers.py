@@ -24,6 +24,11 @@ class FarmerProfileSerializer(serializers.ModelSerializer):
         )
         farmer_profile = FarmerProfile.objects.create(user=user, **validated_data)
         return farmer_profile
+    
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
 
 # serializers.py
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
